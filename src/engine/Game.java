@@ -261,67 +261,135 @@ public class Game {
 	
 	public void attack(Direction d) {
 		Champion c = this.getCurrentChampion();
-		int nearest = 999999999;
-		Damageable nearestChampion = null;
-		int range = c.getAttackRange();
-		int damage = c.getAttackDamage();
-		
-		for (int i = 0; i<this.getAvailableChampions().size();i++) {
-			Damageable temp = (Damageable)this.getAvailableChampions().get(i);
-
-			if(d.equals(Direction.UP)) {
-				if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x > c.getLocation().x) {
-					int distance = temp.getLocation().x - c.getLocation().x;
-					if (distance <= nearest) {
-						nearest = distance;
-						nearestChampion = temp;
-					}
-				}
-			}
-			if(d.equals(Direction.DOWN)) {
-				if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x < c.getLocation().x) {
-					int distance = c.getLocation().x - temp.getLocation().x;
-					if (distance <= nearest) {
-						nearest = distance;
-						nearestChampion = temp;
-					}
-				}
-			}
-			if(d.equals(Direction.RIGHT)) {
-				if(c.getLocation().y < temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
-					int distance = temp.getLocation().y - c.getLocation().y;
-					if (distance <= nearest) {
-						nearest = distance;
-						nearestChampion = temp;
-					}
-				}
-			}
-			if(d.equals(Direction.LEFT)) {
-				if(c.getLocation().y > temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
-					int distance = c.getLocation().x - temp.getLocation().x;
-					if (distance <= nearest) {
-						nearest = distance;
-						nearestChampion = temp;
-					}
-				}
-			}
-		}
-
+		if(c.getCurrentActionPoints() >= 2) {
+			c.setCurrentActionPoints(c.getCurrentActionPoints() -2);
 			
-		if(nearest <= range && nearest != 0 && nearestChampion != null ) {
-			if(nearestChampion instanceof Hero && c instanceof AntiHero 
-					|| nearestChampion instanceof Hero && c instanceof Villain
-					|| nearestChampion instanceof Villain && c instanceof Hero
-					|| nearestChampion instanceof Villain && c instanceof AntiHero
-					|| nearestChampion instanceof AntiHero && c instanceof Hero
-					|| nearestChampion instanceof AntiHero && c instanceof Villain) {
-				nearestChampion.setCurrentHP((int)(nearestChampion.getCurrentHP() - c.getAttackDamage() * 1.5));
+			int nearest = 999999999;
+			Damageable nearestChampion = null;
+			int range = c.getAttackRange();
+			int damage = c.getAttackDamage();
+			
+			for (int i = 0; i<this.getAvailableChampions().size();i++) {
+				Damageable temp = (Damageable)this.getAvailableChampions().get(i);
+
+				if(d.equals(Direction.UP)) {
+					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x > c.getLocation().x) {
+						int distance = temp.getLocation().x - c.getLocation().x;
+						if (distance <= nearest) {
+							nearest = distance;
+							nearestChampion = temp;
+						}
+					}
+				}
+				if(d.equals(Direction.DOWN)) {
+					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x < c.getLocation().x) {
+						int distance = c.getLocation().x - temp.getLocation().x;
+						if (distance <= nearest) {
+							nearest = distance;
+							nearestChampion = temp;
+						}
+					}
+				}
+				if(d.equals(Direction.RIGHT)) {
+					if(c.getLocation().y < temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
+						int distance = temp.getLocation().y - c.getLocation().y;
+						if (distance <= nearest) {
+							nearest = distance;
+							nearestChampion = temp;
+						}
+					}
+				}
+				if(d.equals(Direction.LEFT)) {
+					if(c.getLocation().y > temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
+						int distance = c.getLocation().x - temp.getLocation().x;
+						if (distance <= nearest) {
+							nearest = distance;
+							nearestChampion = temp;
+						}
+					}
+				}
+			}
+
 				
-			}else {
-				nearestChampion.setCurrentHP(nearestChampion.getCurrentHP() - c.getAttackDamage());
+			if(nearest <= range && nearest != 0 && nearestChampion != null ) {
+				if(nearestChampion instanceof Hero && c instanceof AntiHero 
+						|| nearestChampion instanceof Hero && c instanceof Villain
+						|| nearestChampion instanceof Villain && c instanceof Hero
+						|| nearestChampion instanceof Villain && c instanceof AntiHero
+						|| nearestChampion instanceof AntiHero && c instanceof Hero
+						|| nearestChampion instanceof AntiHero && c instanceof Villain) {
+					nearestChampion.setCurrentHP((int)(nearestChampion.getCurrentHP() - c.getAttackDamage() * 1.5));
+					
+				}else {
+					nearestChampion.setCurrentHP(nearestChampion.getCurrentHP() - c.getAttackDamage());
+				}
+				
 			}
 			
 		}
+
+	}
+	
+	public void castAbility(Ability a) {
+		Champion c = this.getCurrentChampion();
+		int range = a.getCastRange();
+		ArrayList<Damageable> targets = new ArrayList<Damageable>();
+		for (int i =0;i<this.getAvailableChampions().size();i++) {
+			Damageable temp = (Damageable) this.getAvailableChampions().get(i);
+			int distance = Math.abs(temp.getLocation().y-c.getLocation().y) + Math.abs(temp.getLocation().x-c.getLocation().x);
+			if(distance <= range) {
+				targets.add(temp);
+			}
+		}
+		a.execute(targets);
+	}
+	public void castAbility(Ability a, Direction d) {
+		if(a.getCastArea().equals(AreaOfEffect.DIRECTIONAL)) {
+			Champion c = this.getCurrentChampion();
+			int range = a.getCastRange();
+			ArrayList<Damageable> targets = new ArrayList<Damageable>();
+			for (int i = 0; i<this.getAvailableChampions().size();i++) {
+				Damageable temp = (Damageable)this.getAvailableChampions().get(i);
+
+				if(d.equals(Direction.UP)) {
+					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x > c.getLocation().x) {
+						int distance = temp.getLocation().x - c.getLocation().x;
+						if (distance <= range) {
+							targets.add(temp);
+						}
+					}
+				}
+				if(d.equals(Direction.DOWN)) {
+					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x < c.getLocation().x) {
+						int distance = c.getLocation().x - temp.getLocation().x;
+						if (distance <= range) {
+							targets.add(temp);
+						}
+					}
+				}
+				if(d.equals(Direction.RIGHT)) {
+					if(c.getLocation().y < temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
+						int distance = temp.getLocation().y - c.getLocation().y;
+						if (distance <= range) {
+							targets.add(temp);
+						}
+					}
+				}
+				if(d.equals(Direction.LEFT)) {
+					if(c.getLocation().y > temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
+						int distance = c.getLocation().x - temp.getLocation().x;
+						if (distance <= range) {
+							targets.add(temp);
+						}
+					}
+				}
+			}
+			a.execute(targets);
+		}
+		
+	}
+	public void castAbility(Ability a, int x, int y) {
+		
 	}
 	
 	public static ArrayList<Champion> getAvailableChampions() {
