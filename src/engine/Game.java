@@ -25,6 +25,7 @@ import model.effects.Stun;
 import model.world.AntiHero;
 import model.world.Champion;
 import model.world.Cover;
+import model.world.Damageable;
 import model.world.Direction;
 import model.world.Hero;
 import model.world.Villain;
@@ -259,7 +260,68 @@ public class Game {
 	}
 	
 	public void attack(Direction d) {
+		Champion c = this.getCurrentChampion();
+		int nearest = 999999999;
+		Damageable nearestChampion = null;
+		int range = c.getAttackRange();
+		int damage = c.getAttackDamage();
 		
+		for (int i = 0; i<this.getAvailableChampions().size();i++) {
+			Damageable temp = (Damageable)this.getAvailableChampions().get(i);
+
+			if(d.equals(Direction.UP)) {
+				if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x > c.getLocation().x) {
+					int distance = temp.getLocation().x - c.getLocation().x;
+					if (distance <= nearest) {
+						nearest = distance;
+						nearestChampion = temp;
+					}
+				}
+			}
+			if(d.equals(Direction.DOWN)) {
+				if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x < c.getLocation().x) {
+					int distance = c.getLocation().x - temp.getLocation().x;
+					if (distance <= nearest) {
+						nearest = distance;
+						nearestChampion = temp;
+					}
+				}
+			}
+			if(d.equals(Direction.RIGHT)) {
+				if(c.getLocation().y < temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
+					int distance = temp.getLocation().y - c.getLocation().y;
+					if (distance <= nearest) {
+						nearest = distance;
+						nearestChampion = temp;
+					}
+				}
+			}
+			if(d.equals(Direction.LEFT)) {
+				if(c.getLocation().y > temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
+					int distance = c.getLocation().x - temp.getLocation().x;
+					if (distance <= nearest) {
+						nearest = distance;
+						nearestChampion = temp;
+					}
+				}
+			}
+		}
+
+			
+		if(nearest <= range && nearest != 0 && nearestChampion != null ) {
+			if(nearestChampion instanceof Hero && c instanceof AntiHero 
+					|| nearestChampion instanceof Hero && c instanceof Villain
+					|| nearestChampion instanceof Villain && c instanceof Hero
+					|| nearestChampion instanceof Villain && c instanceof AntiHero
+					|| nearestChampion instanceof AntiHero && c instanceof Hero
+					|| nearestChampion instanceof AntiHero && c instanceof Villain) {
+				nearestChampion.setCurrentHP((int)(nearestChampion.getCurrentHP() - c.getAttackDamage() * 1.5));
+				
+			}else {
+				nearestChampion.setCurrentHP(nearestChampion.getCurrentHP() - c.getAttackDamage());
+			}
+			
+		}
 	}
 	
 	public static ArrayList<Champion> getAvailableChampions() {
