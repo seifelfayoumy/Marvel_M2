@@ -18,7 +18,7 @@ public class Dodge extends Effect {
 	public void remove(Champion c) {
 		c.setSpeed((int)(c.getSpeed()*0.95));
 		c.setCondition(Condition.ACTIVE);
-		c.getAbilities().remove(this);
+		c.getAppliedEffects().remove(this);
 	}
 
 }

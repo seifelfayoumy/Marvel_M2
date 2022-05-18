@@ -16,7 +16,7 @@ public class Stun extends Effect {
 	}
 	public void remove(Champion c) {
 		c.setCondition(Condition.ACTIVE);
-		c.getAbilities().remove(this);
+		c.getAppliedEffects().remove(this);
 	}
 
 

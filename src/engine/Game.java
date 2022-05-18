@@ -24,6 +24,7 @@ import model.effects.SpeedUp;
 import model.effects.Stun;
 import model.world.AntiHero;
 import model.world.Champion;
+import model.world.Condition;
 import model.world.Cover;
 import model.world.Damageable;
 import model.world.Direction;
@@ -225,6 +226,12 @@ public class Game {
 	
 	public void move(Direction d) {
 		Champion c = this.getCurrentChampion();
+		for(int i = 0; i<c.getAppliedEffects().size();i++) {
+			if(c.getAppliedEffects().get(i).getName().equals("Root")) {
+				return;
+			}
+		}
+		
 		if(this.getCurrentChampion().getCurrentActionPoints() > 0) {
 			this.getCurrentChampion().setCurrentActionPoints(this.getCurrentChampion().getCurrentActionPoints() - 1);
 			
@@ -261,6 +268,26 @@ public class Game {
 	
 	public void attack(Direction d) {
 		Champion c = this.getCurrentChampion();
+		boolean isShock = false;
+		for(int i = 0; i<c.getAppliedEffects().size();i++) {
+			if(c.getAppliedEffects().get(i).getName().equals("Disarm")) {
+				return;
+			}
+			if(c.getAppliedEffects().get(i).getName().equals("Dodge")){
+				if(Math.random() < 0.5) {
+					return;
+				}
+			}
+			if(c.getAppliedEffects().get(i).getName().equals("Shield")){
+				c.getAppliedEffects().remove(i);
+				return;
+				
+			}
+			if(c.getAppliedEffects().get(i).getName().equals("Shock")){
+				isShock = true;
+			}
+			
+		}
 		if(c.getCurrentActionPoints() >= 2) {
 			c.setCurrentActionPoints(c.getCurrentActionPoints() -2);
 			
@@ -309,7 +336,10 @@ public class Game {
 					}
 				}
 			}
-
+			double damageTmp = c.getAttackDamage();
+			if(isShock) {
+				damageTmp = damageTmp *0.9;
+			}
 				
 			if(nearest <= range && nearest != 0 && nearestChampion != null ) {
 				if(nearestChampion instanceof Hero && c instanceof AntiHero 
@@ -318,10 +348,10 @@ public class Game {
 						|| nearestChampion instanceof Villain && c instanceof AntiHero
 						|| nearestChampion instanceof AntiHero && c instanceof Hero
 						|| nearestChampion instanceof AntiHero && c instanceof Villain) {
-					nearestChampion.setCurrentHP((int)(nearestChampion.getCurrentHP() - c.getAttackDamage() * 1.5));
+					nearestChampion.setCurrentHP((int)(nearestChampion.getCurrentHP() - damageTmp * 1.5));
 					
 				}else {
-					nearestChampion.setCurrentHP(nearestChampion.getCurrentHP() - c.getAttackDamage());
+					nearestChampion.setCurrentHP((int)(nearestChampion.getCurrentHP() - damageTmp));
 				}
 				
 			}
@@ -332,13 +362,39 @@ public class Game {
 	
 	public void castAbility(Ability a) {
 		Champion c = this.getCurrentChampion();
+		if(a instanceof DamagingAbility) {
+			for(int i = 0; i<c.getAppliedEffects().size();i++) {
+				if(c.getAppliedEffects().get(i).getName().equals("Shield")){
+					c.getAppliedEffects().remove(i);
+					return;
+					
+				}
+			}
+		}
+		for(int i = 0; i<c.getAppliedEffects().size();i++) {
+			if(c.getAppliedEffects().get(i).getName().equals("Silence")){
+				return;
+				
+			}
+		}
 		int range = a.getCastRange();
 		ArrayList<Damageable> targets = new ArrayList<Damageable>();
-		for (int i =0;i<this.getAvailableChampions().size();i++) {
-			Damageable temp = (Damageable) this.getAvailableChampions().get(i);
-			int distance = Math.abs(temp.getLocation().y-c.getLocation().y) + Math.abs(temp.getLocation().x-c.getLocation().x);
-			if(distance <= range) {
-				targets.add(temp);
+		if(a.getCastArea().equals(AreaOfEffect.SURROUND)) {
+			for (int i =0;i<this.getAvailableChampions().size();i++) {
+				Damageable temp = (Damageable) this.getAvailableChampions().get(i);
+				int distanceX = c.getLocation().x - temp.getLocation().x;
+				int distanceY= c.getLocation().y-temp.getLocation().y;
+				if(distanceX<=1 && distanceX<=1){
+					targets.add(temp);
+				}
+			}
+		}else {
+			for (int i =0;i<this.getAvailableChampions().size();i++) {
+				Damageable temp = (Damageable) this.getAvailableChampions().get(i);
+				int distance = Math.abs(temp.getLocation().y-c.getLocation().y) + Math.abs(temp.getLocation().x-c.getLocation().x);
+				if(distance <= range && temp != c) {
+					targets.add(temp);
+				}
 			}
 		}
 		a.execute(targets);
@@ -346,6 +402,21 @@ public class Game {
 	public void castAbility(Ability a, Direction d) {
 		if(a.getCastArea().equals(AreaOfEffect.DIRECTIONAL)) {
 			Champion c = this.getCurrentChampion();
+			if(a instanceof DamagingAbility) {
+				for(int i = 0; i<c.getAppliedEffects().size();i++) {
+					if(c.getAppliedEffects().get(i).getName().equals("Shield")){
+						c.getAppliedEffects().remove(i);
+						return;
+						
+					}
+				}
+			}
+			for(int i = 0; i<c.getAppliedEffects().size();i++) {
+				if(c.getAppliedEffects().get(i).getName().equals("Silence")){
+					return;
+					
+				}
+			}
 			int range = a.getCastRange();
 			ArrayList<Damageable> targets = new ArrayList<Damageable>();
 			for (int i = 0; i<this.getAvailableChampions().size();i++) {
@@ -389,7 +460,96 @@ public class Game {
 		
 	}
 	public void castAbility(Ability a, int x, int y) {
+		if(a.getCastArea().equals(AreaOfEffect.SINGLETARGET)) {
+			Champion c = this.getCurrentChampion();
+			if(a instanceof DamagingAbility) {
+				for(int i = 0; i<c.getAppliedEffects().size();i++) {
+					if(c.getAppliedEffects().get(i).getName().equals("Shield")){
+						c.getAppliedEffects().remove(i);
+						return;
+						
+					}
+				}
+			}
+			for(int i = 0; i<c.getAppliedEffects().size();i++) {
+				if(c.getAppliedEffects().get(i).getName().equals("Silence")){
+					return;
+					
+				}
+			}
+			int range = a.getCastRange();
+			Damageable temp =(Damageable) this.board[y][x];
+			if(temp != null ) {
+				int distance = Math.abs(c.getLocation().y-temp.getLocation().y) + Math.abs(c.getLocation().x-temp.getLocation().x);
+				if(distance <= range) {
+					ArrayList<Damageable> targets = new ArrayList<Damageable>();
+					targets.add(temp);
+					a.execute(targets);
+				}
+			}
+		}
 		
+	}
+	
+	public void useLeaderAbility() {
+		ArrayList<Champion> targets = new ArrayList<Champion>();
+		Champion c = this.getCurrentChampion();
+		boolean isFirstPlayer = false;
+		boolean isSecondPlayer = false;
+		Player player = null;
+		if(this.getFirstPlayer().getLeader() == c) {
+			isFirstPlayer = true;
+			player = this.getFirstPlayer();
+			
+		}else if(this.getSecondPlayer().getLeader() == c) {
+			isSecondPlayer = true;
+			player = this.getSecondPlayer();
+		}
+		if(isFirstPlayer || isSecondPlayer) {
+			if(c instanceof Hero) {
+				targets = player.getTeam();
+			}else if(c instanceof Villain) {
+				if(isFirstPlayer) {
+					targets = this.getSecondPlayer().getTeam();
+				}else {
+					targets = this.getFirstPlayer().getTeam();
+				}
+			}else {
+				for(int i = 0;i<this.getFirstPlayer().getTeam().size();i++) {
+					Champion tmp = this.getFirstPlayer().getTeam().get(i);
+					if(this.getFirstPlayer().getLeader() != tmp) {
+						targets.add(tmp);
+					}
+				}
+				for(int i = 0;i<this.getSecondPlayer().getTeam().size();i++) {
+					Champion tmp = this.getSecondPlayer().getTeam().get(i);
+					if(this.getSecondPlayer().getLeader() != tmp) {
+						targets.add(tmp);
+					}
+				}
+			}
+			c.useLeaderAbility(targets);
+		}
+	}
+	
+	public void endTurn() {
+		this.getTurnOrder().remove();
+		if(this.getTurnOrder().isEmpty()) {
+			this.prepareChampionTurns();
+		}else {
+			if(this.getCurrentChampion().getCondition().equals(Condition.INACTIVE)) {
+				this.endTurn();
+			}
+		}
+		this.getCurrentChampion().getAppliedEffects().clear();
+		this.getCurrentChampion().getAbilities().clear();
+		this.getCurrentChampion().setCurrentActionPoints(this.getCurrentChampion().getMaxActionPointsPerTurn());
+	}
+	
+	public void prepareChampionTurns() {
+		for(int i = 0;i<this.getAvailableChampions().size();i++) {
+			this.getTurnOrder().insert(this.getAvailableChampions().get(i));
+		}
 	}
 	
 	public static ArrayList<Champion> getAvailableChampions() {

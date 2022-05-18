@@ -20,6 +20,6 @@ public class Embrace extends Effect {
 	public void remove(Champion c) {
 		c.setSpeed((int)(c.getSpeed()*0.8));
 		c.setAttackDamage((int)(c.getAttackDamage()*0.8));
-		c.getAbilities().remove(this);
+		c.getAppliedEffects().remove(this);
 	}
 }
