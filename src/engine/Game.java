@@ -6,6 +6,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import exceptions.AbilityUseException;
+import exceptions.ChampionDisarmedException;
+import exceptions.LeaderAbilityAlreadyUsedException;
+import exceptions.LeaderNotCurrentException;
+import exceptions.NotEnoughResourcesException;
+import exceptions.UnallowedMovementException;
 import model.abilities.Ability;
 import model.abilities.AreaOfEffect;
 import model.abilities.CrowdControlAbility;
@@ -224,11 +230,11 @@ public class Game {
 		return null;
 	}
 	
-	public void move(Direction d) {
+	public void move(Direction d) throws UnallowedMovementException, NotEnoughResourcesException {
 		Champion c = this.getCurrentChampion();
 		for(int i = 0; i<c.getAppliedEffects().size();i++) {
 			if(c.getAppliedEffects().get(i).getName().equals("Root")) {
-				return;
+				throw new UnallowedMovementException();
 			}
 		}
 		
@@ -236,42 +242,52 @@ public class Game {
 			this.getCurrentChampion().setCurrentActionPoints(this.getCurrentChampion().getCurrentActionPoints() - 1);
 			
 			if(d.equals(Direction.UP)) {
-				if(c.getLocation().x < 5 && this.getBoard()[c.getLocation().x+1][c.getLocation().y] != null) {
-					this.board[c.getLocation().x + 1][c.getLocation().y] = c;
-					this.board[c.getLocation().x][c.getLocation().y] = null;
-					c.setLocation(new Point(c.getLocation().x+1,c.getLocation().y));
+				if(c.getLocation().getX() < 5 && this.getBoard()[(int) (c.getLocation().getX()+1)][(int) c.getLocation().getX()] != null) {
+					this.board[(int) (c.getLocation().getX() + 1)][(int) c.getLocation().getX()] = c;
+					this.board[(int) c.getLocation().getX()][(int) c.getLocation().getX()] = null;
+					c.setLocation(new Point((int)(c.getLocation().getX()+1),(int)((c.getLocation().getX()))));
+				}else {
+					throw new UnallowedMovementException();
 				}
 			}
 			if(d.equals(Direction.DOWN)) {
-				if(c.getLocation().x > 1 && this.getBoard()[c.getLocation().x-1][c.getLocation().y] != null) {
-					this.board[c.getLocation().x -1][c.getLocation().y] = c;
-					this.board[c.getLocation().x][c.getLocation().y] = null;
-					c.setLocation(new Point(c.getLocation().x-1,c.getLocation().y));
+				if(c.getLocation().getX() > 1 && this.getBoard()[(int) (c.getLocation().getX()-1)][(int) c.getLocation().getX()] != null) {
+					this.board[(int) (c.getLocation().getX() -1)][(int) c.getLocation().getX()] = c;
+					this.board[(int) c.getLocation().getX()][(int) c.getLocation().getX()] = null;
+					c.setLocation(new Point((int)(c.getLocation().getX()-1),(int)((c.getLocation().getX()))));
+				}else {
+					throw new UnallowedMovementException();
 				}
 			}
 			if(d.equals(Direction.RIGHT)) {
-				if(c.getLocation().y < 5 && this.getBoard()[c.getLocation().x][c.getLocation().y+1] != null) {
-					this.board[c.getLocation().x][c.getLocation().y+1] = c;
-					this.board[c.getLocation().x][c.getLocation().y] = null;
-					c.setLocation(new Point(c.getLocation().x,c.getLocation().y+1));
+				if(c.getLocation().getX() < 5 && this.getBoard()[(int) c.getLocation().getX()][(int) (c.getLocation().getX()+1)] != null) {
+					this.board[(int) c.getLocation().getX()][(int) (c.getLocation().getX()+1)] = c;
+					this.board[(int) c.getLocation().getX()][(int) c.getLocation().getX()] = null;
+					c.setLocation(new Point((int)(c.getLocation().getX()+1),(int)((c.getLocation().getX()+1))));
+				}else {
+					throw new UnallowedMovementException();
 				}
 			}
 			if(d.equals(Direction.LEFT)) {
-				if(c.getLocation().y > 1 && this.getBoard()[c.getLocation().x][c.getLocation().y-1] != null) {
-					this.board[c.getLocation().x][c.getLocation().y -1] = c;
-					this.board[c.getLocation().x][c.getLocation().y] = null;
-					c.setLocation(new Point(c.getLocation().x,c.getLocation().y-1));
+				if(c.getLocation().getX() > 1 && this.getBoard()[(int) c.getLocation().getX()][(int) (c.getLocation().getX()-1)] != null) {
+					this.board[(int) c.getLocation().getX()][(int) (c.getLocation().getX() -1)] = c;
+					this.board[(int) c.getLocation().getX()][(int) c.getLocation().getX()] = null;
+					c.setLocation(new Point((int)(c.getLocation().getX()+1),(int)((c.getLocation().getX()-1))));
+				}else {
+					throw new UnallowedMovementException();
 				}
 			}
+		}else {
+			throw new NotEnoughResourcesException();
 		}
 	}
 	
-	public void attack(Direction d) {
+	public void attack(Direction d) throws NotEnoughResourcesException, ChampionDisarmedException{
 		Champion c = this.getCurrentChampion();
 		boolean isShock = false;
 		for(int i = 0; i<c.getAppliedEffects().size();i++) {
 			if(c.getAppliedEffects().get(i).getName().equals("Disarm")) {
-				return;
+				throw new ChampionDisarmedException();
 			}
 			if(c.getAppliedEffects().get(i).getName().equals("Dodge")){
 				if(Math.random() < 0.5) {
@@ -300,8 +316,8 @@ public class Game {
 				Damageable temp = (Damageable)this.getAvailableChampions().get(i);
 
 				if(d.equals(Direction.UP)) {
-					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x > c.getLocation().x) {
-						int distance = temp.getLocation().x - c.getLocation().x;
+					if(c.getLocation().getX() == temp.getLocation().getX() && temp.getLocation().getX()> c.getLocation().getX()) {
+						int distance = (int) (temp.getLocation().getX() - c.getLocation().getX());
 						if (distance <= nearest) {
 							nearest = distance;
 							nearestChampion = temp;
@@ -309,8 +325,8 @@ public class Game {
 					}
 				}
 				if(d.equals(Direction.DOWN)) {
-					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x < c.getLocation().x) {
-						int distance = c.getLocation().x - temp.getLocation().x;
+					if(c.getLocation().getX() == temp.getLocation().getX() && temp.getLocation().getX() < c.getLocation().getX()) {
+						int distance = (int) (c.getLocation().getX() - temp.getLocation().getX());
 						if (distance <= nearest) {
 							nearest = distance;
 							nearestChampion = temp;
@@ -318,8 +334,8 @@ public class Game {
 					}
 				}
 				if(d.equals(Direction.RIGHT)) {
-					if(c.getLocation().y < temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
-						int distance = temp.getLocation().y - c.getLocation().y;
+					if(c.getLocation().getX() < temp.getLocation().getX() && temp.getLocation().getX() == c.getLocation().getX()) {
+						int distance = (int) (temp.getLocation().getX() - c.getLocation().getX());
 						if (distance <= nearest) {
 							nearest = distance;
 							nearestChampion = temp;
@@ -327,8 +343,8 @@ public class Game {
 					}
 				}
 				if(d.equals(Direction.LEFT)) {
-					if(c.getLocation().y > temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
-						int distance = c.getLocation().x - temp.getLocation().x;
+					if(c.getLocation().getX() > temp.getLocation().getX() && temp.getLocation().getX() == c.getLocation().getX()) {
+						int distance = (int) (c.getLocation().getX() - temp.getLocation().getX());
 						if (distance <= nearest) {
 							nearest = distance;
 							nearestChampion = temp;
@@ -356,24 +372,31 @@ public class Game {
 				
 			}
 			
+		}else {
+			throw new NotEnoughResourcesException();
 		}
 
 	}
 	
-	public void castAbility(Ability a) {
+	public void castAbility(Ability a) throws AbilityUseException,NotEnoughResourcesException {
 		Champion c = this.getCurrentChampion();
+		if(a.getRequiredActionPoints() < c.getCurrentActionPoints()) {
+			throw new  NotEnoughResourcesException();
+		}else {
+			c.setCurrentActionPoints(c.getCurrentActionPoints() - a.getRequiredActionPoints());
+		}
 		if(a instanceof DamagingAbility) {
 			for(int i = 0; i<c.getAppliedEffects().size();i++) {
 				if(c.getAppliedEffects().get(i).getName().equals("Shield")){
 					c.getAppliedEffects().remove(i);
-					return;
+					throw new AbilityUseException();
 					
 				}
 			}
 		}
 		for(int i = 0; i<c.getAppliedEffects().size();i++) {
 			if(c.getAppliedEffects().get(i).getName().equals("Silence")){
-				return;
+				throw new AbilityUseException();
 				
 			}
 		}
@@ -382,8 +405,8 @@ public class Game {
 		if(a.getCastArea().equals(AreaOfEffect.SURROUND)) {
 			for (int i =0;i<this.getAvailableChampions().size();i++) {
 				Damageable temp = (Damageable) this.getAvailableChampions().get(i);
-				int distanceX = c.getLocation().x - temp.getLocation().x;
-				int distanceY= c.getLocation().y-temp.getLocation().y;
+				int distanceX = (int) (c.getLocation().getX() - temp.getLocation().getX());
+				int distanceY= (int) (c.getLocation().getX()-temp.getLocation().getX());
 				if(distanceX<=1 && distanceX<=1){
 					targets.add(temp);
 				}
@@ -391,7 +414,7 @@ public class Game {
 		}else {
 			for (int i =0;i<this.getAvailableChampions().size();i++) {
 				Damageable temp = (Damageable) this.getAvailableChampions().get(i);
-				int distance = Math.abs(temp.getLocation().y-c.getLocation().y) + Math.abs(temp.getLocation().x-c.getLocation().x);
+				int distance = (int) (Math.abs(temp.getLocation().getX()-c.getLocation().getX()) + Math.abs(temp.getLocation().getX()-c.getLocation().getX()));
 				if(distance <= range && temp != c) {
 					targets.add(temp);
 				}
@@ -399,21 +422,26 @@ public class Game {
 		}
 		a.execute(targets);
 	}
-	public void castAbility(Ability a, Direction d) {
+	public void castAbility(Ability a, Direction d) throws AbilityUseException,NotEnoughResourcesException {
 		if(a.getCastArea().equals(AreaOfEffect.DIRECTIONAL)) {
 			Champion c = this.getCurrentChampion();
+			if(a.getRequiredActionPoints() < c.getCurrentActionPoints()) {
+				throw new  NotEnoughResourcesException();
+			}else {
+				c.setCurrentActionPoints(c.getCurrentActionPoints() - a.getRequiredActionPoints());
+			}
 			if(a instanceof DamagingAbility) {
 				for(int i = 0; i<c.getAppliedEffects().size();i++) {
 					if(c.getAppliedEffects().get(i).getName().equals("Shield")){
 						c.getAppliedEffects().remove(i);
-						return;
+						throw new AbilityUseException();
 						
 					}
 				}
 			}
 			for(int i = 0; i<c.getAppliedEffects().size();i++) {
 				if(c.getAppliedEffects().get(i).getName().equals("Silence")){
-					return;
+					throw new AbilityUseException();
 					
 				}
 			}
@@ -423,32 +451,32 @@ public class Game {
 				Damageable temp = (Damageable)this.getAvailableChampions().get(i);
 
 				if(d.equals(Direction.UP)) {
-					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x > c.getLocation().x) {
-						int distance = temp.getLocation().x - c.getLocation().x;
+					if(c.getLocation().getX() == temp.getLocation().getX() && temp.getLocation().getX() > c.getLocation().getX()) {
+						int distance = (int) (temp.getLocation().getX() - c.getLocation().getX());
 						if (distance <= range) {
 							targets.add(temp);
 						}
 					}
 				}
 				if(d.equals(Direction.DOWN)) {
-					if(c.getLocation().y == temp.getLocation().y && temp.getLocation().x < c.getLocation().x) {
-						int distance = c.getLocation().x - temp.getLocation().x;
+					if(c.getLocation().getX() == temp.getLocation().getX() && temp.getLocation().getX() < c.getLocation().getX()) {
+						int distance = (int) (c.getLocation().getX() - temp.getLocation().getX());
 						if (distance <= range) {
 							targets.add(temp);
 						}
 					}
 				}
 				if(d.equals(Direction.RIGHT)) {
-					if(c.getLocation().y < temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
-						int distance = temp.getLocation().y - c.getLocation().y;
+					if(c.getLocation().getX() < temp.getLocation().getX() && temp.getLocation().getX() == c.getLocation().getX()) {
+						int distance = (int) (temp.getLocation().getX() - c.getLocation().getX());
 						if (distance <= range) {
 							targets.add(temp);
 						}
 					}
 				}
 				if(d.equals(Direction.LEFT)) {
-					if(c.getLocation().y > temp.getLocation().y && temp.getLocation().x == c.getLocation().x) {
-						int distance = c.getLocation().x - temp.getLocation().x;
+					if(c.getLocation().getX() > temp.getLocation().getX() && temp.getLocation().getX() == c.getLocation().getX()) {
+						int distance = (int) (c.getLocation().getX() - temp.getLocation().getX());
 						if (distance <= range) {
 							targets.add(temp);
 						}
@@ -459,39 +487,46 @@ public class Game {
 		}
 		
 	}
-	public void castAbility(Ability a, int x, int y) {
+	public void castAbility(Ability a, int x, int y) throws AbilityUseException,NotEnoughResourcesException {
 		if(a.getCastArea().equals(AreaOfEffect.SINGLETARGET)) {
 			Champion c = this.getCurrentChampion();
+			if(a.getRequiredActionPoints() < c.getCurrentActionPoints()) {
+				throw new  NotEnoughResourcesException();
+			}else {
+				c.setCurrentActionPoints(c.getCurrentActionPoints() - a.getRequiredActionPoints());
+			}
 			if(a instanceof DamagingAbility) {
 				for(int i = 0; i<c.getAppliedEffects().size();i++) {
 					if(c.getAppliedEffects().get(i).getName().equals("Shield")){
 						c.getAppliedEffects().remove(i);
-						return;
+						throw new AbilityUseException();
 						
 					}
 				}
 			}
 			for(int i = 0; i<c.getAppliedEffects().size();i++) {
 				if(c.getAppliedEffects().get(i).getName().equals("Silence")){
-					return;
+					throw new AbilityUseException();
 					
 				}
 			}
 			int range = a.getCastRange();
 			Damageable temp =(Damageable) this.board[y][x];
 			if(temp != null ) {
-				int distance = Math.abs(c.getLocation().y-temp.getLocation().y) + Math.abs(c.getLocation().x-temp.getLocation().x);
+				int distance = (int) (Math.abs(c.getLocation().getX()-temp.getLocation().getX()) + Math.abs(c.getLocation().getX()-temp.getLocation().getX()));
 				if(distance <= range) {
 					ArrayList<Damageable> targets = new ArrayList<Damageable>();
 					targets.add(temp);
 					a.execute(targets);
+				}else {
+					throw new AbilityUseException();
 				}
 			}
 		}
 		
 	}
 	
-	public void useLeaderAbility() {
+	public void useLeaderAbility() throws LeaderAbilityAlreadyUsedException, LeaderNotCurrentException{
 		ArrayList<Champion> targets = new ArrayList<Champion>();
 		Champion c = this.getCurrentChampion();
 		boolean isFirstPlayer = false;
@@ -506,6 +541,19 @@ public class Game {
 			player = this.getSecondPlayer();
 		}
 		if(isFirstPlayer || isSecondPlayer) {
+			if(isFirstPlayer) {
+				if(this.firstLeaderAbilityUsed == false) {
+					this.firstLeaderAbilityUsed = true;
+				}else {
+					throw new LeaderAbilityAlreadyUsedException();
+				}
+			}else {
+				if(this.secondLeaderAbilityUsed == false) {
+					this.secondLeaderAbilityUsed = true;
+				}else {
+					throw new LeaderAbilityAlreadyUsedException();
+				}
+			}
 			if(c instanceof Hero) {
 				targets = player.getTeam();
 			}else if(c instanceof Villain) {
@@ -529,6 +577,8 @@ public class Game {
 				}
 			}
 			c.useLeaderAbility(targets);
+		}else {
+			throw new LeaderNotCurrentException();
 		}
 	}
 	
@@ -542,14 +592,21 @@ public class Game {
 			}
 		}
 		this.getCurrentChampion().getAppliedEffects().clear();
-		this.getCurrentChampion().getAbilities().clear();
 		this.getCurrentChampion().setCurrentActionPoints(this.getCurrentChampion().getMaxActionPointsPerTurn());
+		for(int i = 0; i< this.getCurrentChampion().getAbilities().size();i++) {
+			Ability a = this.getCurrentChampion().getAbilities().get(i);
+			a.setCurrentCooldown(a.getCurrentCooldown() + 1);
+		}
+	
 	}
 	
 	public void prepareChampionTurns() {
-		for(int i = 0;i<this.getAvailableChampions().size();i++) {
-			this.getTurnOrder().insert(this.getAvailableChampions().get(i));
+		if(this.getTurnOrder().isEmpty()) {
+			for(int i = 0;i<this.getAvailableChampions().size();i++) {
+				this.getTurnOrder().insert(this.getAvailableChampions().get(i));
+			}
 		}
+
 	}
 	
 	public static ArrayList<Champion> getAvailableChampions() {
