@@ -15,7 +15,7 @@ public class Hero extends Champion {
 
 	public void useLeaderAbility(ArrayList<Champion> targets) {
 		for(int i = 0;i<targets.size();i++) {
-			for(int j =0;i<targets.get(i).getAppliedEffects().size();j++) {
+			for(int j =0;j<targets.get(i).getAppliedEffects().size();j++) {
 				String name = targets.get(i).getAppliedEffects().get(j).getName();
 				if(name.equals("Disarm")||name.equals("Root")||name.equals("Shock")||name.equals("Silence")||name.equals("Stun")) {
 					targets.get(i).getAppliedEffects().remove(j);
