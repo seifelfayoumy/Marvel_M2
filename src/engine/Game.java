@@ -423,7 +423,7 @@ public class Game {
 				}
 				
 
-				if((nearestChampion instanceof Hero && c instanceof AntiHero || nearestChampion instanceof Cover )
+				if((nearestChampion instanceof Hero && c instanceof AntiHero )
 						|| (nearestChampion instanceof Hero && c instanceof Villain)
 						|| (nearestChampion instanceof Villain && c instanceof Hero)
 						|| (nearestChampion instanceof Villain && c instanceof AntiHero)
@@ -431,12 +431,14 @@ public class Game {
 						|| (nearestChampion instanceof AntiHero && c instanceof Villain)) {
 					nearestChampion.setCurrentHP((nearestChampion.getCurrentHP() - ((int)(damageTmp * 1.5))));
 					
+				}else if( nearestChampion instanceof Cover){
+					nearestChampion.setCurrentHP((nearestChampion.getCurrentHP() - ((int)(damageTmp * 3))));
 				}else {
 					nearestChampion.setCurrentHP((nearestChampion.getCurrentHP() - damageTmp));
 				}
-				if(nearestChampion.getCurrentHP() <=0 && nearestChampion instanceof Champion) {
+				if((nearestCh.getCurrentHP() <=0 || nearestCh.getCondition().equals(Condition.KNOCKEDOUT))&& nearestChampion instanceof Champion) {
 					board[(int)(nearestChampion.getLocation().getX())][(int)(nearestChampion.getLocation().getY())] = null;
-					nearestCh.setCondition(Condition.KNOCKEDOUT);
+					nearestCh.setCondition(Condition.INACTIVE);
 				}
 			}
 			
@@ -511,12 +513,16 @@ public class Game {
 						targets.add((Damageable) player.getTeam().get(i));
 					}
 				}else {
-					for(int j = 0; j<c.getAppliedEffects().size();j++) {
-						if(c.getAppliedEffects().get(j).getName().equals("Disarm")){
-							c.getAppliedEffects().remove(j);
-						    targets.remove(c);
-							
-						}
+					
+//					for(int j = 0; j<c.getAppliedEffects().size();j++) {
+//						if(c.getAppliedEffects().get(j).getName().equals("Disarm")){
+//							c.getAppliedEffects().remove(j);
+//						    targets.remove(c);
+//							
+//						}
+//					}
+					if(cc.getEffect().getName().equals("Disarm")) {
+						targets.remove(c);
 					}
 					if(isFirstPlayer) {
 						for(int i = 0; i < this.getFirstPlayer().getTeam().size();i++) {
@@ -616,35 +622,38 @@ public class Game {
 							int distanceY= (int) (Math.abs(c.getLocation().getY()-temp.getLocation().getY()));
 							if((distanceX >1 || distanceY>1) || temp == c){
 								targets.remove(j);
+								player.getTeam().get(i).getAppliedEffects().remove(cc.getEffect());
 							}
 						}
 					}
 					
 				}else {
 					if(isFirstPlayer) {
-						for(int i = 0; i < this.getFirstPlayer().getTeam().size();i++) {
-							targets.add((Damageable) this.getFirstPlayer().getTeam().get(i));
-							player.getTeam().get(i).getAppliedEffects().add(cc.getEffect());
-							for (int j =0;j<targets.size();j++) {
-								Damageable temp = (Damageable) targets.get(j);
-								int distanceX = (int) (Math.abs(c.getLocation().getX() - temp.getLocation().getX()));
-								int distanceY= (int) (Math.abs(c.getLocation().getY()-temp.getLocation().getY()));
-								if((distanceX >1 || distanceY>1) || temp == c){
-									targets.remove(j);
-								}
-							}
-						}
-					}else {
 						for(int i = 0; i < this.getSecondPlayer().getTeam().size();i++) {
 							targets.add((Damageable) this.getSecondPlayer().getTeam().get(i));
-							player.getTeam().get(i).getAppliedEffects().add(cc.getEffect());
-							for (int j =0;j<targets.size();j++) {
-								Damageable temp = (Damageable) targets.get(j);
+							this.getSecondPlayer().getTeam().get(i).getAppliedEffects().add(cc.getEffect());
+							
+								Damageable temp = (Damageable) targets.get(targets.size()-1);
 								int distanceX = (int) (Math.abs(c.getLocation().getX() - temp.getLocation().getX()));
 								int distanceY= (int) (Math.abs(c.getLocation().getY()-temp.getLocation().getY()));
 								if((distanceX >1 || distanceY>1) || temp == c){
-									targets.remove(j);
+									targets.remove(targets.size()-1);
+									this.getSecondPlayer().getTeam().get(i).getAppliedEffects().remove(cc.getEffect());
 								}
+							
+						}
+					}else {
+						for(int i = 0; i < this.getFirstPlayer().getTeam().size();i++) {
+							targets.add((Damageable) this.getFirstPlayer().getTeam().get(i));
+							this.getFirstPlayer().getTeam().get(i).getAppliedEffects().add(cc.getEffect());
+							
+								Damageable temp = (Damageable)targets.get(targets.size()-1);
+								int distanceX = (int) (Math.abs(c.getLocation().getX() - temp.getLocation().getX()));
+								int distanceY= (int) (Math.abs(c.getLocation().getY()-temp.getLocation().getY()));
+								if((distanceX >1 || distanceY>1) || temp == c){
+									targets.remove(targets.size()-1);
+									this.getFirstPlayer().getTeam().get(i).getAppliedEffects().remove(cc.getEffect());
+								
 							}
 						}
 					}
@@ -860,7 +869,7 @@ public void castAbility(Ability a,int x,int y) throws  InvalidTargetException,Ab
 	Champion c = this.getCurrentChampion();
 	ArrayList<Damageable> targets = new ArrayList<Damageable>();
 	
-	if(board[x][y] instanceof Champion ) {
+	if(board[x][y] instanceof Champion) {
 	
 		if(a.getRequiredActionPoints() > c.getCurrentActionPoints()) {
 			throw new  NotEnoughResourcesException();
@@ -985,7 +994,7 @@ public void castAbility(Ability a,int x,int y) throws  InvalidTargetException,Ab
 			throw new CloneNotSupportedException();
 		}
 	}else {
-		throw new InvalidTargetException();
+		throw new AbilityUseException();
 	}
 }
 
