@@ -11,12 +11,12 @@ public class Stun extends Effect {
 	
 	public void apply(Champion c) {
 		c.setCondition(Condition.INACTIVE);
-		c.getAppliedEffects().add(this);
+		
 		
 	}
 	public void remove(Champion c) {
 		c.setCondition(Condition.ACTIVE);
-		c.getAppliedEffects().remove(this);
+		
 	}
 
 

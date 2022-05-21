@@ -14,7 +14,7 @@ public class Shield extends Effect {
 		c.getAppliedEffects().add(this);
 	}
 	public void remove(Champion c) {
-		c.setSpeed((int)(c.getSpeed()*0.98));
+		c.setSpeed((int)(c.getSpeed()/1.02));
 		c.getAppliedEffects().remove(this);
 	}
 

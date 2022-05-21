@@ -16,7 +16,7 @@ public class PowerUp extends Effect {
 		
 	}
 	public void remove(Champion c) {
-		c.setAttackDamage((int)(c.getAttackDamage()*0.8));
+		c.setAttackDamage((int)(c.getAttackDamage()/1.2));
 		c.getAppliedEffects().remove(this);
 	}
 	

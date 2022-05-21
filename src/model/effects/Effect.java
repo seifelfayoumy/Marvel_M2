@@ -5,7 +5,7 @@ import model.world.Champion;
 
 
 
-public class Effect implements Cloneable{
+public abstract class Effect implements Cloneable{
 	private String name;
 	private EffectType type;
 	private int duration;
@@ -35,11 +35,7 @@ public class Effect implements Cloneable{
 		return super.clone();
 	}
 	
-	public void apply(Champion c) {
-		
-	}
-	public void remove(Champion c) {
-		
-	}
+	public abstract void apply(Champion c);
+	public abstract void remove(Champion c);
 
 }
