@@ -48,10 +48,7 @@ public abstract class Champion implements Comparable , Damageable{
 		}
 	}
 	
-	public void useLeaderAbility(ArrayList<Champion> targets) {
-		
-		
-	}
+	public abstract void useLeaderAbility(ArrayList<Champion> targets);
 
 	public int getMaxHP() {
 		return maxHP;
